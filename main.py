@@ -21,6 +21,7 @@ class Map:
         self.entry = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((0, 30), (100, 50)), manager=self.manager
         )
+        self.points = []
         self.set_request()
 
     def draw(self):
@@ -36,6 +37,9 @@ class Map:
         self.params = {"ll": ",".join([self.x, self.y]),
                        "spn": ",".join([self.spn, self.spn]),
                        "l": self.type}
+        # если есть точки - указываем их
+        if self.points:
+            self.params['pt'] = '~'.join(self.points)
         # запрос
         self.image = requests.get(API_SERVER, self.params)
 
@@ -82,13 +86,8 @@ class Map:
                 "featureMember"][0]["GeoObject"]
             # получаем координаты объекта
             self.x, self.y = toponym["Point"]["pos"].split(" ")
-            # параметры
-            self.params = {"ll": ",".join([self.x, self.y]),
-                           "spn": ",".join([self.spn, self.spn]),
-                           "l": self.type,
-                           "pt": f'{self.x},{self.y}'}
-            # запрос
-            self.image = requests.get(API_SERVER, self.params)
+            # добавляем координаты
+            self.points.append(f'{self.x},{self.y}')
         except Exception:
             pass
 
@@ -155,6 +154,7 @@ while running:
         if event.type == pygame.USEREVENT:
             if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                 map.search(event.text)
+                map.set_request()
                 break
         map.manager.process_events(event)
     map.manager.update(time_delta)

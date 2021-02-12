@@ -1,7 +1,10 @@
 import pygame
 import requests
+import pygame_gui
 import os
 API_SERVER = "http://static-maps.yandex.ru/1.x"
+API_SERVER_GEOCODE = 'http://geocode-maps.yandex.ru/1.x/'
+API_KEY = '40d1649f-0493-4b70-98ba-98533de7710b'
 
 
 class Map:
@@ -14,6 +17,10 @@ class Map:
         self.types = ['map', 'sat', 'sat,skl']
         self.map_file = "map.png"
         self.btn = Button()
+        self.manager = pygame_gui.UIManager((600, 400))
+        self.entry = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect((0, 30), (100, 50)), manager=self.manager
+        )
         self.set_request()
 
     def draw(self):
@@ -62,6 +69,29 @@ class Map:
                 self.type = self.types[(i + 1) % 3]
                 break
 
+    def search(self, obj):
+        try:
+            # ищем объект
+            geocoder_params = {
+                "apikey": "40d1649f-0493-4b70-98ba-98533de7710b",
+                "geocode": obj,
+                "format": "json"}
+            response = requests.get(API_SERVER_GEOCODE, params=geocoder_params)
+            json_response = response.json()
+            toponym = json_response["response"]["GeoObjectCollection"][
+                "featureMember"][0]["GeoObject"]
+            # получаем координаты объекта
+            self.x, self.y = toponym["Point"]["pos"].split(" ")
+            # параметры
+            self.params = {"ll": ",".join([self.x, self.y]),
+                           "spn": ",".join([self.spn, self.spn]),
+                           "l": self.type,
+                           "pt": f'{self.x},{self.y}'}
+            # запрос
+            self.image = requests.get(API_SERVER, self.params)
+        except Exception:
+            pass
+
 
 class Button:
     def __init__(self):
@@ -89,8 +119,10 @@ running = True
 map = Map('55.55', '55.55', '1')
 screen = pygame.display.set_mode((600, 400))
 pygame.display.set_caption('Карта')
+clock = pygame.time.Clock()
 # цикл программы
 while running:
+    time_delta = clock.tick(60) / 1000.0
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -114,14 +146,24 @@ while running:
         if event.type == pygame.KEYUP and event.key == pygame.K_RIGHT:
             map.move('right')
             map.set_request()
+        # Проверяем кнопку, отвечиющую за смену типа карты
         if event.type == pygame.MOUSEBUTTONDOWN and \
                 (0 <= event.pos[0] <= map.btn.w and 0 <= event.pos[1] <= map.btn.h):
             map.update_type()
             map.set_request()
+        # Проверяем ввод для поиска
+        if event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+                map.search(event.text)
+                break
+        map.manager.process_events(event)
+    map.manager.update(time_delta)
     screen.fill((0, 0, 0))
     # отображаем карту
     map.draw()
+    map.manager.draw_ui(screen)
     pygame.display.flip()
+    clock.tick(60)
 # удаляем файл и выходим
 os.remove(map.map_file)
 pygame.quit()

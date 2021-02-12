@@ -41,6 +41,17 @@ class Map:
         elif float(self.spn) < 0.0005:
             self.spn = str(float(self.spn) * 2)
 
+    def move(self, condition):
+        # узнаем, куда двигаться и проверяем критические значения
+        if condition == 'up' and float(self.y) + float(self.spn) / 2 < 80:
+            self.y = str(float(self.y) + float(self.spn) / 2)
+        elif condition == 'down' and float(self.y) - float(self.spn) / 2 > -80:
+            self.y = str(float(self.y) - float(self.spn) / 2)
+        elif condition == 'right' and float(self.x) + float(self.spn) / 2 < 80:
+            self.x = str(float(self.x) + float(self.spn) / 2)
+        elif condition == 'left' and float(self.x) - float(self.spn) / 2 > -80:
+            self.x = str(float(self.x) - float(self.spn) / 2)
+
 
 # инициализируем программу
 running = True
@@ -59,6 +70,19 @@ while running:
             map.set_request()
         if event.type == pygame.KEYUP and event.key == pygame.K_PAGEDOWN:
             map.update_spn('down')
+            map.set_request()
+        # перемещение
+        if event.type == pygame.KEYUP and event.key == pygame.K_UP:
+            map.move('up')
+            map.set_request()
+        if event.type == pygame.KEYUP and event.key == pygame.K_DOWN:
+            map.move('down')
+            map.set_request()
+        if event.type == pygame.KEYUP and event.key == pygame.K_LEFT:
+            map.move('left')
+            map.set_request()
+        if event.type == pygame.KEYUP and event.key == pygame.K_RIGHT:
+            map.move('right')
             map.set_request()
     screen.fill((0, 0, 0))
     # отображаем карту

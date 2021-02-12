@@ -18,8 +18,13 @@ class Map:
         self.map_file = "map.png"
         self.btn = Button()
         self.manager = pygame_gui.UIManager((600, 400))
+        self.btn_del = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((0, 60), (150, 50)),
+            manager=self.manager,
+            text='Сбросить точку'
+        )
         self.entry = pygame_gui.elements.UITextEntryLine(
-            relative_rect=pygame.Rect((0, 30), (100, 50)), manager=self.manager
+            relative_rect=pygame.Rect((0, 30), (150, 50)), manager=self.manager
         )
         self.points = []
         self.set_request()
@@ -91,6 +96,11 @@ class Map:
         except Exception:
             pass
 
+    def del_point(self):
+        # удаляем последнюю точку
+        if self.points:
+            del self.points[-2:]
+
 
 class Button:
     def __init__(self):
@@ -154,6 +164,11 @@ while running:
         if event.type == pygame.USEREVENT:
             if event.user_type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                 map.search(event.text)
+                map.set_request()
+                break
+            # проверяем нажатие кнопки для удаления точек
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                map.del_point()
                 map.set_request()
                 break
         map.manager.process_events(event)

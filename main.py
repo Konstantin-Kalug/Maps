@@ -11,7 +11,9 @@ class Map:
         self.y = y
         self.spn = spn
         self.type = 'map'
+        self.types = ['map', 'sat', 'sat,skl']
         self.map_file = "map.png"
+        self.btn = Button()
         self.set_request()
 
     def draw(self):
@@ -20,6 +22,7 @@ class Map:
             file.write(self.image.content)
         # копируем изображение
         screen.blit(pygame.image.load(self.map_file), (0, 0))
+        screen.blit(self.btn.text, (0, 0))
 
     def set_request(self):
         # запрос
@@ -52,11 +55,38 @@ class Map:
         elif condition == 'left' and float(self.x) - float(self.spn) / 2 > -80:
             self.x = str(float(self.x) - float(self.spn) / 2)
 
+    def update_type(self):
+        self.btn.set_text()
+        for i in range(len(self.types)):
+            if self.type == self.types[i]:
+                self.type = self.types[(i + 1) % 3]
+                break
+
+
+class Button:
+    def __init__(self):
+        self.texts = ['схема', 'спутник', 'гибрид']
+        self.text_btn = self.texts[0]
+        # инициализация переключателя
+        self.font = pygame.font.Font(None, 30)
+        self.text = self.font.render(self.text_btn, 1, (0, 0, 0))
+        self.w = self.text.get_width()
+        self.h = self.text.get_height()
+
+    def set_text(self):
+        for i in range(len(self.texts)):
+            if self.text_btn == self.texts[i]:
+                self.text_btn = self.texts[(i + 1) % 3]
+                break
+        self.text = self.font.render(self.text_btn, 1, (0, 0, 0))
+        self.w = self.text.get_width()
+        self.h = self.text.get_height()
+
 
 # инициализируем программу
+pygame.init()
 running = True
 map = Map('55.55', '55.55', '1')
-pygame.init()
 screen = pygame.display.set_mode((600, 400))
 pygame.display.set_caption('Карта')
 # цикл программы
@@ -83,6 +113,10 @@ while running:
             map.set_request()
         if event.type == pygame.KEYUP and event.key == pygame.K_RIGHT:
             map.move('right')
+            map.set_request()
+        if event.type == pygame.MOUSEBUTTONDOWN and \
+                (0 <= event.pos[0] <= map.btn.w and 0 <= event.pos[1] <= map.btn.h):
+            map.update_type()
             map.set_request()
     screen.fill((0, 0, 0))
     # отображаем карту

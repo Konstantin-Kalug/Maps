@@ -26,8 +26,13 @@ class Map:
         self.entry = pygame_gui.elements.UITextEntryLine(
             relative_rect=pygame.Rect((0, 30), (150, 50)), manager=self.manager
         )
+        self.postal_menu = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
+            options_list=['Без индекса', 'С индексом'], starting_option='Без индекса',
+            relative_rect=pygame.Rect((0, 330), (150, 25)), manager=self.manager
+        )
         self.points = []
         self.points_address = []
+        self.postal_code = False
         self.set_request()
 
     def draw(self):
@@ -40,8 +45,13 @@ class Map:
         pygame.draw.rect(screen, (128, 128, 128), (0, 380, 600, 400), 0)
         # если есть адресс - выводим
         if self.points_address:
-            font = pygame.font.Font(None, 30)
-            text = font.render(self.points_address[-1], 1, (0, 0, 0))
+            # проверяем наличие почтового индекса
+            if len(self.points_address[-1]) == 2 and self.postal_code:
+                address = ', '.join(self.points_address[-1])
+            else:
+                address = self.points_address[-1][0]
+            font = pygame.font.Font(None, 20)
+            text = font.render(address, 1, (0, 0, 0))
             screen.blit(text, (0, 380))
 
     def set_request(self):
@@ -101,8 +111,11 @@ class Map:
             # добавляем координаты
             self.points.append(f'{self.x},{self.y}')
             # добавляем в список адресс
-            self.points_address.append(toponym['metaDataProperty']['GeocoderMetaData']
-                                       ['Address']['formatted'])
+            self.points_address.append([toponym['metaDataProperty']['GeocoderMetaData']
+                                       ['Address']['formatted']])
+            # добавляем почтовый индекс
+            self.points_address[-1].append(toponym['metaDataProperty']['GeocoderMetaData']
+                                           ['Address']['postal_code'])
         except Exception:
             pass
 
@@ -179,9 +192,13 @@ while running:
                 break
             # проверяем нажатие кнопки для удаления точек
             if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                map.del_point()
-                map.set_request()
-                break
+                if event.ui_element == map.btn_del:
+                    map.del_point()
+                    map.set_request()
+                    break
+            # проверяем изменения
+            if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+                map.postal_code = True if event.text == 'С индексом' else False
         map.manager.process_events(event)
     map.manager.update(time_delta)
     screen.fill((0, 0, 0))

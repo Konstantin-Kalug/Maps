@@ -27,6 +27,7 @@ class Map:
             relative_rect=pygame.Rect((0, 30), (150, 50)), manager=self.manager
         )
         self.points = []
+        self.points_address = []
         self.set_request()
 
     def draw(self):
@@ -36,6 +37,12 @@ class Map:
         # копируем изображение
         screen.blit(pygame.image.load(self.map_file), (0, 0))
         screen.blit(self.btn.text, (0, 0))
+        pygame.draw.rect(screen, (128, 128, 128), (0, 380, 600, 400), 0)
+        # если есть адресс - выводим
+        if self.points_address:
+            font = pygame.font.Font(None, 30)
+            text = font.render(self.points_address[-1], 1, (0, 0, 0))
+            screen.blit(text, (0, 380))
 
     def set_request(self):
         # запрос
@@ -93,6 +100,9 @@ class Map:
             self.x, self.y = toponym["Point"]["pos"].split(" ")
             # добавляем координаты
             self.points.append(f'{self.x},{self.y}')
+            # добавляем в список адресс
+            self.points_address.append(toponym['metaDataProperty']['GeocoderMetaData']
+                                       ['Address']['formatted'])
         except Exception:
             pass
 
@@ -100,6 +110,7 @@ class Map:
         # удаляем последнюю точку
         if self.points:
             del self.points[-2:]
+            del self.points_address[-2:]
 
 
 class Button:
